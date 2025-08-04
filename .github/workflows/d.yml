@@ -1,0 +1,46 @@
+name: Infinite Ubuntu VPS w/ ngrok SSH
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'  # runs every 10 mins if needed
+
+jobs:
+  ssh-vps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # stays alive almost 6 hours
+
+    steps:
+    - name: Setup ngrok and SSH
+      run: |
+        sudo apt update
+        sudo apt install -y openssh-server curl jq
+
+        echo 'root:root' | sudo chpasswd
+        sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        sudo systemctl restart ssh
+
+        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null
+        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+        sudo apt update && sudo apt install -y ngrok
+
+        ngrok config add-authtoken 2Xo3He7qMZ7Aivrc5cuGTarwCyv_692yCNrterWntDUJ2Sx8P
+
+        echo "Starting tunnel..."
+        ngrok tcp 22 > /dev/null &
+        sleep 5
+
+        echo "⏳ Fetching ngrok public address..."
+        sleep 10
+        curl -s http://127.0.0.1:4040/api/tunnels > tunnels.json
+        TCP_URL=$(jq -r '.tunnels[0].public_url' < tunnels.json)
+
+        echo "=============================="
+        echo "✅ VPS is LIVE!"
+        echo "SSH Command:"
+        echo "ssh root@${TCP_URL#tcp://} -p ${TCP_URL##*:}"
+        echo "Password: root"
+        echo "=============================="
+
+        sleep 350m  # keeps it running
