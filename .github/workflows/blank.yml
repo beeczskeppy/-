@@ -1,16 +1,18 @@
-# .github/workflows/freevps.yml
-name: Free VPS
+name: Free Ubuntu VPS
 
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Start SSH
-        run: |
-          apt update && apt install -y tmate
-          tmate -F new-session -d
-          sleep 5
-          tmate show-messages
-          tmate display -p '#{tmate_ssh}'
+    - name: Set up tmate session
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tmate
+        tmate -S /tmp/tmate.sock new-session -d
+        tmate -S /tmp/tmate.sock wait tmate-ready
+        echo "SSH session is ready!"
+        tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+        tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
