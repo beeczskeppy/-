@@ -1,18 +1,20 @@
-name: Free Ubuntu VPS
+name: sybau
 
-on: [push]
+on: [workflow_dispatch]  # manual start
 
 jobs:
-  build:
+  run-vps:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Set up tmate session
+    - name: Setup tmate
       run: |
         sudo apt-get update
         sudo apt-get install -y tmate
         tmate -S /tmp/tmate.sock new-session -d
         tmate -S /tmp/tmate.sock wait tmate-ready
-        echo "SSH session is ready!"
+        echo "SSH connection:"
         tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+        echo "Web URL:"
         tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+        echo "Waiting for you to connect... (press Ctrl+C to kill this)"
+        sleep infinity
