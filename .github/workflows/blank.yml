@@ -1,0 +1,16 @@
+# .github/workflows/freevps.yml
+name: Free VPS
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start SSH
+        run: |
+          apt update && apt install -y tmate
+          tmate -F new-session -d
+          sleep 5
+          tmate show-messages
+          tmate display -p '#{tmate_ssh}'
